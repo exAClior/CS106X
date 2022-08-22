@@ -1,0 +1,9 @@
+#+TITLE: Solution to Game of Life
+* Create Makefile
+- At each assignment root directory, run ~qmake~
+- ~Makefile~ and necessary structure of project will be generated
+
+* Program structure
+- Need to consider aging changes color of dot
+- Need to store age somewhere
+- vector of Grid
