@@ -24,7 +24,7 @@ using namespace std;
  */
 static void welcome();
 
-static void getStartConfig(int &row, int &column);
+static void getStartConfig(int &row, int &column, vector<Grid<int>> &worlds);
 
 /**
  * Function: main
@@ -34,10 +34,15 @@ static void getStartConfig(int &row, int &column);
 int main() {
   LifeDisplay display;
   // prepare row and column
-  int row, column;
+  int row = 0, column = 0;
+  int curIdx = 0;
+  // current world and next world
+  vector<Grid<int>> world;
+
   display.setTitle("Game of Life");
   welcome();
-  getStartConfig(row, column);
+  getStartConfig(row, column, world);
+  display.setDimensions(row, column);
   getLine("Give me some time to look at this");
   return 0;
 }
@@ -58,19 +63,40 @@ static void welcome() {
   getLine("Hit [enter] to continue....   ");
 }
 
-static void getStartConfig(int &row, int &column) {
+static void getStartConfig(int &row, int &column, vector<Grid<int>> &worlds) {
   string filename =
-      getLine("Provide a file name that you wish to load config from");
+      getLine("Provide a file name that you wish to load config from:");
   ifstream my_file;
   my_file.open("files/" + filename);
 
   if (!my_file) {
-    cout << filename << " does not exist, will load random config"
-         << endl;
+    cout << filename << " does not exist, will load random config" << endl;
+    row = randomInteger(40, 60);
+    column = randomInteger(40, 60);
+    Grid<int>curWorld (row,column);
+    Grid<int>nextWorld (row,column);
+    for (int ii = 0; ii < row; ii++) {
+      for (int jj = 0; jj < column; jj++) {
+        curWorld[ii][jj] = randomInteger(0, 1) * randomInteger(1, kMaxAge);
+      }
+    }
+    worlds.push_back(curWorld);
+    worlds.push_back(nextWorld);
   } else {
     string line;
+    // get column and row info first
+    while (getline(my_file, line)) {
+      if (line[0] != '#') {
+        row = stoi(line);
+        getline(my_file, line);
+        column = stoi(line);
+        break;
+      }
+    }
     while (getline(my_file, line)) {
       cout << line << endl;
     }
   }
+
+  my_file.close();
 }
