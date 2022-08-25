@@ -26,6 +26,7 @@ static void welcome();
 
 static void getStartConfig(int &row, int &column, vector<Grid<int>> &worlds);
 
+static void drawOnDisp(Grid<int> & world, LifeDisplay & display);
 /**
  * Function: main
  * --------------
@@ -37,14 +38,26 @@ int main() {
   int row = 0, column = 0;
   int curIdx = 0;
   // current world and next world
-  vector<Grid<int>> world;
+  vector<Grid<int>> worlds;
 
   display.setTitle("Game of Life");
   welcome();
-  getStartConfig(row, column, world);
+  getStartConfig(row, column, worlds);
   display.setDimensions(row, column);
+  drawOnDisp(worlds[curIdx],display);
+  display.repaint();
   getLine("Give me some time to look at this");
   return 0;
+}
+
+static void drawOnDisp(Grid<int> & world, LifeDisplay & display){
+  int rows = world.numRows();
+  int cols = world.numCols();
+  for (int ii = 0 ; ii < rows; ii ++){
+    for (int jj = 0; jj < cols; jj ++){
+      display.drawCellAt(ii,jj,world[ii][jj]);
+    }
+  }
 }
 
 static void welcome() {
@@ -69,19 +82,21 @@ static void getStartConfig(int &row, int &column, vector<Grid<int>> &worlds) {
   ifstream my_file;
   my_file.open("files/" + filename);
 
+  Grid<int> curWorld, nextWorld;
+
   if (!my_file) {
     cout << filename << " does not exist, will load random config" << endl;
     row = randomInteger(40, 60);
     column = randomInteger(40, 60);
-    Grid<int>curWorld (row,column);
-    Grid<int>nextWorld (row,column);
+
+    curWorld.resize(row,column);
+    nextWorld.resize(row,column);
+
     for (int ii = 0; ii < row; ii++) {
       for (int jj = 0; jj < column; jj++) {
         curWorld[ii][jj] = randomInteger(0, 1) * randomInteger(1, kMaxAge);
       }
     }
-    worlds.push_back(curWorld);
-    worlds.push_back(nextWorld);
   } else {
     string line;
     // get column and row info first
@@ -93,10 +108,25 @@ static void getStartConfig(int &row, int &column, vector<Grid<int>> &worlds) {
         break;
       }
     }
+
+    int row_count = 0;
+
+    curWorld.resize(row, column);
+    nextWorld.resize(row, column);
+
     while (getline(my_file, line)) {
-      cout << line << endl;
+      for (int column_count = 0; column_count < column; column_count++) {
+        if (line[column_count] == '-') {
+          curWorld[row_count][column_count] = 0;
+        } else {
+          curWorld[row_count][column_count] = 1;
+        }
+      }
+      row_count += 1;
     }
   }
 
+  worlds.push_back(curWorld);
+  worlds.push_back(nextWorld);
   my_file.close();
 }
