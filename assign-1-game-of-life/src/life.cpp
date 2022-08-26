@@ -15,7 +15,8 @@ using namespace std;
 
 #include "console.h" // required of all files that contain the main function
 #include "gevents.h" // for mouse event detection
-#include "simpio.h"  // for getLine
+#include "gtimer.h"
+#include "simpio.h" // for getLine
 #include "strlib.h"
 
 #include "life-constants.h" // for kMaxAge
@@ -26,15 +27,25 @@ using namespace std;
  * -----------------
  * Introduces the user to the Game of Life and its rules.
  */
-static void welcome();
+static void welcome(int &ms);
 
+// load starting configuraiton from file or randomly
 static void getStartConfig(int &row, int &column, vector<Grid<int>> &worlds);
 
+// draw the world on display
 static void drawOnDisp(Grid<int> &world, LifeDisplay &display);
 
+// evolve the world one day
 static void evolveWorld(vector<Grid<int>> &worlds, int &curIdx);
 
+// Count number of neighbours of a cell
 static int countNeighbours(Grid<int> &world, int &row, int &col);
+
+// checks if stable
+static bool checkStable(vector<Grid<int>> &worlds, int &curIdx);
+
+static bool runAnimation(LifeDisplay &display, vector<Grid<int>> &worlds,
+                         int &curIdx, int &ms);
 /**
  * Function: main
  * --------------
@@ -45,31 +56,75 @@ int main() {
   // prepare row and column
   int row = 0, column = 0;
   int curIdx = 0;
+  int ms = 0;
+  string command;
+  bool cont = true;
   // current world and next world
   vector<Grid<int>> worlds;
 
   display.setTitle("Game of Life");
-  welcome();
+  welcome(ms);
   getStartConfig(row, column, worlds);
   display.setDimensions(row, column);
   drawOnDisp(worlds[curIdx], display);
-  // getLine("Give me some time to look at this");
-  for (int jj = 0; jj < 1000000; jj++) {
-
-    evolveWorld(worlds, curIdx);
-    drawOnDisp(worlds[curIdx], display);
-    // later change this to implement varying time
-    this_thread::sleep_for(chrono::seconds(1));
+  while (cont) {
+    if (ms <= 0) {
+      command = getLine("Hit enter to evolve or type quit to stop\n");
+      if (command == "quit") {
+        break;
+      }
+    }
+    cont = runAnimation(display, worlds, curIdx, ms);
   }
   return 0;
 }
 
+static bool runAnimation(LifeDisplay &display, vector<Grid<int>> &worlds,
+                         int &curIdx, int &ms) {
+  GTimer timer(ms);
+  timer.start();
+  while (true) {
+    GEvent event = waitForEvent(TIMER_EVENT + MOUSE_EVENT);
+    if (event.getEventClass() == TIMER_EVENT) {
+      evolveWorld(worlds, curIdx);
+      drawOnDisp(worlds[curIdx], display);
+      if (checkStable(worlds, curIdx)) {
+        cout << "Stability reached, quitting!" << endl;
+        return false;
+      }
+    } else if (event.getEventType() == MOUSE_PRESSED) {
+      return false;
+    }
+  }
+  timer.stop();
+  return true;
+}
+
+static bool checkStable(vector<Grid<int>> &worlds, int &curIdx) {
+  int rows = worlds[0].numRows();
+  int cols = worlds[0].numCols();
+  int prevIdx = (curIdx + 1) % 2;
+  for (int ii = 0; ii < rows; ii++) {
+    for (int jj = 0; jj < cols; jj++) {
+      if (worlds[curIdx][ii][jj] - worlds[prevIdx][ii][jj] != 1 ||
+          worlds[prevIdx][ii][jj] == 0) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 static int countNeighbours(Grid<int> &world, int &row, int &col) {
+  // all possible rows and columns of a neighbour
   int row_arr[3] = {row - 1, row, row + 1};
   int col_arr[3] = {col - 1, col, col + 1};
+
   int rows = world.numRows();
   int cols = world.numCols();
+
   int neighbours = 0;
+
   for (int ii : row_arr) {
     for (int jj : col_arr) {
       if (!(ii == row && jj == col)) {
@@ -83,6 +138,7 @@ static int countNeighbours(Grid<int> &world, int &row, int &col) {
   }
   return neighbours;
 }
+
 static void evolveWorld(vector<Grid<int>> &worlds, int &curIdx) {
   int nxtIdx = (curIdx + 1) % 2;
   int rows = worlds[curIdx].numRows();
@@ -96,7 +152,7 @@ static void evolveWorld(vector<Grid<int>> &worlds, int &curIdx) {
       } else if (neighbours == 2) {
         worlds[nxtIdx][ii][jj] = worlds[curIdx][ii][jj] + 1;
         if (worlds[nxtIdx][ii][jj] > kMaxAge) {
-          worlds[nxtIdx][ii][jj] = 0;
+          worlds[nxtIdx][ii][jj] = kMaxAge;
         }
       } else if (neighbours == 3) {
         // if there were life previously what do I do?
@@ -108,6 +164,7 @@ static void evolveWorld(vector<Grid<int>> &worlds, int &curIdx) {
   }
   curIdx = nxtIdx;
 }
+
 static void drawOnDisp(Grid<int> &world, LifeDisplay &display) {
   int rows = world.numRows();
   int cols = world.numCols();
@@ -119,7 +176,7 @@ static void drawOnDisp(Grid<int> &world, LifeDisplay &display) {
   display.repaint();
 }
 
-static void welcome() {
+static void welcome(int &ms) {
   cout << "Welcome to the game of Life, a simulation of the lifecycle of a "
           "bacteria colony."
        << endl;
@@ -132,7 +189,8 @@ static void welcome() {
   cout << "In the animation, new cells are dark and fade to gray as they age."
        << endl
        << endl;
-  getLine("Hit [enter] to continue....   ");
+  ms = stoi(getLine("Provide an interval between evolution in ms, nonpositive "
+                    "time to enter manual mode\n"));
 }
 
 static void getStartConfig(int &row, int &column, vector<Grid<int>> &worlds) {
