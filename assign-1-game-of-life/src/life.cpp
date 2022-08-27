@@ -4,6 +4,7 @@
  * Implements the Game of Life.
  */
 
+#include <cstdio>
 #include <fstream>  // open file
 #include <iostream> // for cout
 #include <string>   // play with string
@@ -44,8 +45,8 @@ static int countNeighbours(Grid<int> &world, int &row, int &col);
 // checks if stable
 static bool checkStable(vector<Grid<int>> &worlds, int &curIdx);
 
-static bool runAnimation(LifeDisplay &display, vector<Grid<int>> &worlds,
-                         int &curIdx, int &ms);
+static void runAnimation(LifeDisplay &display, vector<Grid<int>> &worlds,
+                         int &curIdx, int ms);
 /**
  * Function: main
  * --------------
@@ -58,49 +59,59 @@ int main() {
   int curIdx = 0;
   int ms = 0;
   string command;
-  bool cont = true;
+  bool exit_game = false;
+
   // current world and next world
   vector<Grid<int>> worlds;
 
   display.setTitle("Game of Life");
-  welcome(ms);
-  getStartConfig(row, column, worlds);
-  display.setDimensions(row, column);
-  drawOnDisp(worlds[curIdx], display);
-  while (cont) {
-    if (ms <= 0) {
-      command = getLine("Hit enter to evolve or type quit to stop\n");
-      if (command == "quit") {
-        break;
-      }
+  do {
+    welcome(ms);
+    getStartConfig(row, column, worlds);
+    display.setDimensions(row, column);
+    drawOnDisp(worlds[curIdx], display);
+    runAnimation(display, worlds, curIdx, ms);
+    command = getLine("Exit the game entirely? [Y/N]");
+    if (command == "y" || command == "Y") {
+      exit_game = true;
     }
-    cont = runAnimation(display, worlds, curIdx, ms);
-  }
+  } while (!exit_game);
   return 0;
 }
 
-static bool runAnimation(LifeDisplay &display, vector<Grid<int>> &worlds,
-                         int &curIdx, int &ms) {
-  GTimer timer(ms);
+static void runAnimation(LifeDisplay &display, vector<Grid<int>> &worlds,
+                         int &curIdx, int ms) {
+  int pause_time = ms;
+  if (ms <= 0) {
+    pause_time = 100000;
+    cout << "Press any key to evolve" << endl;
+  }
+  GTimer timer(pause_time);
   timer.start();
   while (true) {
-    GEvent event = waitForEvent(TIMER_EVENT + MOUSE_EVENT);
-    if (event.getEventClass() == TIMER_EVENT) {
+    GEvent event = waitForEvent(TIMER_EVENT + MOUSE_EVENT + KEY_EVENT);
+    if (event.getEventClass() == TIMER_EVENT ||
+        event.getEventClass() == KEY_EVENT) {
+      // empty buffer if case you entered anything
+      if (ms <= 0) {
+        getLine();
+      }
+
       evolveWorld(worlds, curIdx);
       drawOnDisp(worlds[curIdx], display);
       if (checkStable(worlds, curIdx)) {
         cout << "Stability reached, quitting!" << endl;
-        return false;
+        break;
       }
     } else if (event.getEventType() == MOUSE_PRESSED) {
-      return false;
+      break;
     }
   }
   timer.stop();
-  return true;
 }
 
 static bool checkStable(vector<Grid<int>> &worlds, int &curIdx) {
+  // need to check stability condition, if does not keep aging is still stable
   int rows = worlds[0].numRows();
   int cols = worlds[0].numCols();
   int prevIdx = (curIdx + 1) % 2;
@@ -117,22 +128,20 @@ static bool checkStable(vector<Grid<int>> &worlds, int &curIdx) {
 
 static int countNeighbours(Grid<int> &world, int &row, int &col) {
   // all possible rows and columns of a neighbour
-  int row_arr[3] = {row - 1, row, row + 1};
-  int col_arr[3] = {col - 1, col, col + 1};
+  int row_arr[8] = {row - 1, row - 1, row - 1, row,
+                    row,     row + 1, row + 1, row + 1};
+  int col_arr[8] = {col - 1, col,     col + 1, col - 1,
+                    col + 1, col - 1, col,     col + 1};
 
   int rows = world.numRows();
   int cols = world.numCols();
 
   int neighbours = 0;
-
-  for (int ii : row_arr) {
-    for (int jj : col_arr) {
-      if (!(ii == row && jj == col)) {
-        if ((ii >= 0 && ii < rows) && (jj >= 0 && jj < cols)) {
-          if (world[ii][jj] > 0) {
-            neighbours += 1;
-          }
-        }
+  for (int ii = 0; ii < 8; ii++) {
+    if ((row_arr[ii] >= 0 && row_arr[ii] < rows) &&
+        (col_arr[ii] >= 0 && col_arr[ii] < cols)) {
+      if (world[row_arr[ii]][col_arr[ii]] > 0) {
+        neighbours += 1;
       }
     }
   }
