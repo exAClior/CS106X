@@ -1,7 +1,7 @@
 [
   {
     "arguments": [
-      "/opt/cuda-11.1/bin/g++",
+      "/usr/bin/g++",
       "-c",
       "-pipe",
       "-Wall",
@@ -22,8 +22,10 @@
       "-O2",
       "-O2",
       "-std=gnu++1y",
+      "-flto",
+      "-fno-fat-lto-objects",
       "-Wall",
-      "-W",
+      "-Wextra",
       "-D_REENTRANT",
       "-fPIC",
       "-DSPL_PROJECT_VERSION=20181023",
@@ -55,20 +57,20 @@
       "-Ilib/StanfordCPPLib/util",
       "-Isrc",
       "-I.",
-      "-I../../anaconda3/include/qt",
-      "-I../../anaconda3/include/qt/QtMultimedia",
-      "-I../../anaconda3/include/qt/QtWidgets",
-      "-I../../anaconda3/include/qt/QtGui",
-      "-I../../anaconda3/include/qt/QtNetwork",
-      "-I../../anaconda3/include/qt/QtCore",
+      "-I/usr/include/qt",
+      "-I/usr/include/qt/QtMultimedia",
+      "-I/usr/include/qt/QtWidgets",
+      "-I/usr/include/qt/QtGui",
+      "-I/usr/include/qt/QtNetwork",
+      "-I/usr/include/qt/QtCore",
       "-I.",
-      "-I../../anaconda3/mkspecs/linux-g++",
+      "-I/usr/lib/qt/mkspecs/linux-g++",
       "-o",
       "life.o",
       "src/life.cpp"
     ],
-    "directory": "/home/yushengz/CS106X/assign-1-game-of-life",
-    "file": "/home/yushengz/CS106X/assign-1-game-of-life/src/life.cpp",
-    "output": "/home/yushengz/CS106X/assign-1-game-of-life/life.o"
+    "directory": "/home/exaclior/CS106X/assign-1-game-of-life",
+    "file": "/home/exaclior/CS106X/assign-1-game-of-life/src/life.cpp",
+    "output": "/home/exaclior/CS106X/assign-1-game-of-life/life.o"
   }
 ]

@@ -69,6 +69,7 @@ int main() {
     welcome(ms);
     getStartConfig(row, column, worlds);
     display.setDimensions(row, column);
+    curIdx = 0;
     drawOnDisp(worlds[curIdx], display);
     runAnimation(display, worlds, curIdx, ms);
     command = getLine("Exit the game entirely? [Y/N]");
@@ -117,9 +118,10 @@ static bool checkStable(vector<Grid<int>> &worlds, int &curIdx) {
   int prevIdx = (curIdx + 1) % 2;
   for (int ii = 0; ii < rows; ii++) {
     for (int jj = 0; jj < cols; jj++) {
-      if (worlds[curIdx][ii][jj] - worlds[prevIdx][ii][jj] != 1 ||
-          worlds[prevIdx][ii][jj] == 0) {
-        return false;
+      if (worlds[curIdx][ii][jj] != worlds[prevIdx][ii][jj]) {
+        if (worlds[curIdx][ii][jj] - worlds[prevIdx][ii][jj] != 1) {
+          return false;
+        }
       }
     }
   }
@@ -159,15 +161,26 @@ static void evolveWorld(vector<Grid<int>> &worlds, int &curIdx) {
       if (neighbours <= 1) {
         worlds[nxtIdx][ii][jj] = 0;
       } else if (neighbours == 2) {
-        worlds[nxtIdx][ii][jj] = worlds[curIdx][ii][jj] + 1;
-        if (worlds[nxtIdx][ii][jj] > kMaxAge) {
-          worlds[nxtIdx][ii][jj] = kMaxAge;
+        if (worlds[curIdx][ii][jj] == 0) {
+          worlds[nxtIdx][ii][jj] = 0;
+        } else {
+          worlds[nxtIdx][ii][jj] = worlds[curIdx][ii][jj] + 1;
         }
       } else if (neighbours == 3) {
         // if there were life previously what do I do?
-        worlds[nxtIdx][ii][jj] = randomInteger(1, kMaxAge);
+        if (worlds[curIdx][ii][jj] == 0) {
+
+          worlds[nxtIdx][ii][jj] = randomInteger(1, kMaxAge);
+        } else {
+
+          worlds[nxtIdx][ii][jj] = worlds[curIdx][ii][jj] + 1;
+        }
       } else {
         worlds[nxtIdx][ii][jj] = 0;
+      }
+
+      if (worlds[nxtIdx][ii][jj] > kMaxAge) {
+        worlds[nxtIdx][ii][jj] = kMaxAge;
       }
     }
   }
@@ -252,6 +265,7 @@ static void getStartConfig(int &row, int &column, vector<Grid<int>> &worlds) {
     }
   }
 
+  worlds.clear();
   worlds.push_back(curWorld);
   worlds.push_back(nextWorld);
   my_file.close();
