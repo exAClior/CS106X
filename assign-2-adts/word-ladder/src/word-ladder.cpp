@@ -13,7 +13,8 @@ using namespace std;
 #include "set.h"
 #include "simpio.h"
 #include "strlib.h"
-#include "vector.h"
+// #include "vector.h"
+#include "hashset.h"
 
 static string getWord(const Lexicon &english, const string &prompt) {
   while (true) {
@@ -37,9 +38,9 @@ static bool wordUsed(const Vector<string> &partialLadder, const string &word) {
 static void extendLadder(const Lexicon &english,
                          const Vector<string> &prevLadder,
                          Queue<Vector<string>> &ladderQueue) {
-  for (int jj = 0; jj < (int)prevLadder.end()->length(); jj++) {
+  for (int jj = 0; jj < (int)prevLadder.back().length(); jj++) {
     for (int ii = 0; ii < 26; ii++) {
-      string newWord = *prevLadder.end();
+      string newWord = prevLadder.back();
       newWord[jj] = 'a' + ii;
       if (english.contains(newWord) && !wordUsed(prevLadder, newWord)) {
         Vector<string> newLadder = prevLadder;
@@ -52,18 +53,14 @@ static void extendLadder(const Lexicon &english,
 
 static void generateLadder(const Lexicon &english, const string &start,
                            const string &end) {
-  cout << "Start generating ladder" << endl;
   Vector<string> wordLadder;
   wordLadder += start;
 
   Queue<Vector<string>> ladderQueue;
   ladderQueue.enqueue(wordLadder);
   while (!ladderQueue.isEmpty()) {
-    cout << "Start dequeuing ladder" << endl;
     Vector<string> lastLadder = ladderQueue.dequeue();
-    cout << *lastLadder.end() << endl;
-    cout << end << endl;
-    if (*lastLadder.end() == end) {
+    if (lastLadder.back() == end) {
       wordLadder = lastLadder;
       break;
     } else {
