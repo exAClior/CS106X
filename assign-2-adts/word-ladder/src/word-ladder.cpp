@@ -13,8 +13,7 @@ using namespace std;
 #include "set.h"
 #include "simpio.h"
 #include "strlib.h"
-// #include "vector.h"
-#include "hashset.h"
+#include "vector.h"
 
 static string getWord(const Lexicon &english, const string &prompt) {
   while (true) {
@@ -39,8 +38,8 @@ static void extendLadder(const Lexicon &english,
                          const Vector<string> &prevLadder,
                          Queue<Vector<string>> &ladderQueue) {
   for (int jj = 0; jj < (int)prevLadder.back().length(); jj++) {
+    string newWord = prevLadder.back();
     for (int ii = 0; ii < 26; ii++) {
-      string newWord = prevLadder.back();
       newWord[jj] = 'a' + ii;
       if (english.contains(newWord) && !wordUsed(prevLadder, newWord)) {
         Vector<string> newLadder = prevLadder;
