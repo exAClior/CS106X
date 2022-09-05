@@ -47,12 +47,11 @@ static void loadFile(string filename) {
   if (my_file.is_open()) {
     while (my_file) {
       getline(my_file, my_line);
-      // make a queue/or linked list? for first line
+      // make a vector for first line
       // make a map of <string> and list of lines for the rest
       // pop continuously of first line
       // each time non <>, pinrt
       //  <> expand and push line back into queue? this is problematic,
-      cout << my_line << endl;
     }
   }
 }
